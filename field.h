@@ -40,13 +40,20 @@ template<typename type>
 struct potential{
     boundary_type b_type{Non};
     type value{type(0)};
-    type derivative_x{type(0)};
-    type derivative_y{type(0)};
+    point<type> derivative;
+
+    bool isDirichlet(){
+        return b_type == boundary_type::Dirichlet;
+    }
+
+    bool isNeumann(){
+        return b_type == boundary_type::Neumann;
+    }
 };
 
 template<typename type>
 std::ostream& operator<<(std::ostream& out, const potential<type>& u_field){
-    out << '(' << u_field.value << ',' <<u_field.derivative_x << ',' <<u_field.derivative_y << ')';
+    out << '(' << u_field.value << ',' <<u_field.derivative.x << ',' <<u_field.derivative.y << ')';
     return out;
 }
 
@@ -64,14 +71,22 @@ struct field
         generate(grid);
     }
 
+    ~field(){
+        destroy(data, n_x);
+    }
+
     void generate(const points<type>& grid){
         n_x = grid.n_x;
         n_y = grid.n_y;
         data = ::generate<potential<type>>(grid.n_x, grid.n_y);
     }
 
-    ~field(){
-        destroy(data, n_x);
+    potential<type>* operator[](const size_t i){
+        return data[i];
+    }
+
+    const potential<type>* operator[](const size_t i) const {
+        return data[i];
     }
 };
 

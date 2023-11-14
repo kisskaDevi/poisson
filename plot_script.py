@@ -71,7 +71,7 @@ if __name__ == '__main__':
     xy_grid = grid(args.path + "/xy_grid.txt")
     u_field = field(args.path + "/u_field.txt")
 
-    # exact = np.array([[float(val) for val in line.split('\t') if val != '\n'] for line in open(args.path + "/ex_func.txt", "r")])
+    exact = np.array([[float(val) for val in line.split('\t') if val != '\n'] for line in open(args.path + "/ex_func.txt", "r")])
     value = u_field.get_np_u()
 
     fig = plt.figure(figsize = (12,10))
@@ -79,10 +79,10 @@ if __name__ == '__main__':
         case "2d":
             plt.xlabel('x')
             plt.ylabel('y')
-            plt.imshow(np.transpose(value), interpolation='bilinear', cmap=plt.cm.jet, origin='lower', extent=xy_grid.extent, vmin=np.min(value), vmax=np.max(value)) 
+            plt.imshow(np.transpose(value), interpolation='bilinear', cmap='inferno', origin='lower', extent=xy_grid.extent, vmin=np.min(value), vmax=np.max(value)) 
             plt.colorbar()
             plt.quiver(xy_grid.get_np_x(), xy_grid.get_np_y(), - u_field.get_np_gx(), - u_field.get_np_gy(), units='width')
         case "3d":
             ax = plt.axes(projection='3d')
-            surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), value, cmap = plt.cm.cividis)
+            surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), value, cmap='inferno')
     plt.show()

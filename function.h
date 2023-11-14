@@ -10,6 +10,10 @@ struct function
     size_t n_x{0};
     size_t n_y{0};
 
+    ~function(){
+        destroy(data, n_x);
+    }
+
     void generate(const points<type>& grid, type (*f)(type x, type y)){
         n_x = grid.n_x;
         n_y = grid.n_y;
@@ -21,8 +25,12 @@ struct function
         }
     }
 
-    ~function(){
-        destroy(data, n_x);
+    type* operator[](const size_t i){
+        return data[i];
+    }
+
+    const type* operator[](const size_t i) const {
+        return data[i];
     }
 };
 

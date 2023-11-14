@@ -96,10 +96,10 @@ void example_5(points<type>& xy_grid, function<type>& g_func, boundary_condition
 
     ac = additional_conditions<type>{
         [](type x, type y){ return x >= -2.0f && x <= 2.0f && y >= 0.5f && y <= 0.6f ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();},
         [](type x, type y){ return x >= -2.0f && x <= 2.0f && y >= - 0.6f && y <= - 0.5f && y <= 0.6f ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();}
     };
 }
@@ -118,19 +118,19 @@ void example_6(points<type>& xy_grid, function<type>& g_func, boundary_condition
 
     ac = additional_conditions<type>{
         [](type x, type y){ return x >= 2.0f && x <= 3.0f && y >= - 1.5f && y <= - 1.2f && y <= - 1.2f ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();},
         [](type x, type y){ return x >= -3.0f && x <= -2.0f && y >= - 1.5f && y <= - 1.2f ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();},
         [](type x, type y){ return (x - 0.9) * (x - 0.9) + (y + 1.35) * (y + 1.35) < 0.1 ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();},
         [](type x, type y){ return (x + 0.9) * (x + 0.9) + (y + 1.35) * (y + 1.35) < 0.1 ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, - 2.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();},
         [](type x, type y){ return x * x  + (y + 1.35) * (y + 1.35) < 0.1 ?
-                                        std::optional<potential<type>>({boundary_type::Dirichlet, 1.0f, 0.0f, 0.0f}) :
+                                        std::optional<potential<type>>({boundary_type::Dirichlet, 1.0f, {0.0f, 0.0f}}) :
                                         std::optional<potential<type>>();}
     };
 }
@@ -144,13 +144,13 @@ int main()
     boundary_condition<Type> bc;
     additional_conditions<Type> ac;
 
-    example_6(xy_grid, g_func, bc, ex_func, ac);
+    example_5(xy_grid, g_func, bc, ex_func, ac);
 
     field<Type> u_field = poisson_gauss_seidel(gauss_seidel_info<Type>{Type(0.000001), 50000}, xy_grid, g_func, bc, ac);
 
-    std::filesystem::path res_path = std::filesystem::current_path() / "res";
+    std::filesystem::path res_path = std::filesystem::current_path() / "release/res";
     if(! std::filesystem::exists(res_path)){
-        std::filesystem::create_directory(res_path);
+        std::filesystem::create_directories(res_path);
     }
     out_if_file(res_path / "xy_grid.txt", xy_grid.data, xy_grid.n_x, xy_grid.n_y);
     out_if_file(res_path / "g_func.txt", g_func.data, g_func.n_x, g_func.n_y);
