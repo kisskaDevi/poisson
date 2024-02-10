@@ -9,12 +9,17 @@ else()
 endif()
 set(CMAKE_DEBUG_POSTFIX d)
 
-set(SOURCES main.cpp)
+set(SOURCES main.cpp
+core/field.cpp
+core/function.cpp
+core/gauss_seidel.cpp
+core/point.cpp)
 
-set(INCLUDES field.h
-    function.h
-    gauss_seidel.h
-    operations.h
-    point.h)
+set(INCLUDES
+core/operations.h
+core/field.h
+core/function.h
+core/gauss_seidel.h
+core/point.h)
 
 add_executable(poisson ${INCLUDES} ${SOURCES})

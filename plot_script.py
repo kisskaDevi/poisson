@@ -15,17 +15,17 @@ class point:
         self.y = float(pair[1])
 
 
-class grid(list[list[point]]): 
+class grid(list[list[point]]):
     def __init__(self, filename: str) -> None:
         super().__init__([point(pair) for pair in line.split('\t') if pair != '\n'] for line in open(filename, "r"))
-        self.extent = (min(min([pair.x for pair in line]) for line in self), 
+        self.extent = (min(min([pair.x for pair in line]) for line in self),
                        max(max([pair.x for pair in line]) for line in self),
-                       min(min([pair.y for pair in line]) for line in self), 
+                       min(min([pair.y for pair in line]) for line in self),
                        max(max([pair.y for pair in line]) for line in self))
 
     def get_np_x(self) -> np.array:
         return np.array([[pair.x for pair in line] for line in self])
-    
+
     def get_np_y(self) -> np.array:
         return np.array([[pair.y for pair in line] for line in self])
 
@@ -48,16 +48,16 @@ class function:
 class field(list[list[function]]):
     def __init__(self, filename: str) -> None:
         super().__init__([function(func) for func in line.split('\t') if func != '\n'] for line in open(filename, "r"))
-    
+
     def get_np_u(self) -> np.array:
         return np.array([[f.u for f in line] for line in self])
 
     def get_np_gx(self) -> np.array:
         return np.array([[f.gx for f in line] for line in self])
-    
+
     def get_np_gy(self) -> np.array:
         return np.array([[f.gy for f in line] for line in self])
-    
+
     def get_np_gabs(self) -> np.array:
         return np.array([[f.gabs for f in line] for line in self])
 
@@ -67,25 +67,25 @@ if __name__ == '__main__':
     parser.add_argument('--path', type=str, help='path to data', default="./build/Release/res")
     parser.add_argument('--type', type=str, help='plot type')
     args = parser.parse_args()
-    
+
     xy_grid = grid(args.path + "/xy_grid.txt")
     u_field = field(args.path + "/u_field.txt")
-    cuda_grid = grid(args.path + "/../res_cuda/xy_grid.txt")
-    cuda_field = field(args.path + "/../res_cuda/u_field.txt")
+    #cuda_grid = grid(args.path + "/../res_cuda/xy_grid.txt")
+    #cuda_field = field(args.path + "/../res_cuda/u_field.txt")
 
-    exact = np.array([[float(val) for val in line.split('\t') if val != '\n'] for line in open(args.path + "/ex_func.txt", "r")])
+    #exact = np.array([[float(val) for val in line.split('\t') if val != '\n'] for line in open(args.path + "/ex_func.txt", "r")])
     value = u_field.get_np_u()
-    c_value = cuda_field.get_np_u()
+    #c_value = cuda_field.get_np_u()
 
     fig = plt.figure(figsize = (12,10))
     match args.type:
         case "2d":
             plt.xlabel('x')
             plt.ylabel('y')
-            plt.imshow(np.transpose(value), interpolation='bilinear', cmap='inferno', origin='lower', extent=xy_grid.extent, vmin=np.min(value), vmax=np.max(value)) 
+            plt.imshow(np.transpose(value), interpolation='bilinear', cmap='inferno', origin='lower', extent=xy_grid.extent, vmin=np.min(value), vmax=np.max(value))
             plt.colorbar()
             plt.quiver(xy_grid.get_np_x(), xy_grid.get_np_y(), - u_field.get_np_gx(), - u_field.get_np_gy(), units='width')
         case "3d":
             ax = plt.axes(projection='3d')
-            surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), exact -  c_value, cmap='inferno')
+            #surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), exact -  c_value, cmap='inferno')
     plt.show()

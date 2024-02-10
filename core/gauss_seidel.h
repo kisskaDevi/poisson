@@ -12,7 +12,6 @@ template<typename type>
 struct gauss_seidel_info{
     type eps{0};
     size_t max_it{0};
-    bool use_cuda{false};
 };
 
 template<typename type>

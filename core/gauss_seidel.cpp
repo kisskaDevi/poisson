@@ -1,6 +1,8 @@
 #include "gauss_seidel.h"
 
+#ifdef USE_CUDA
 #include "cuda/cuda_gauss_seidel.h"
+#endif
 
 #include <iostream>
 #include <chrono>
@@ -159,11 +161,11 @@ field<type> poisson_gauss_seidel(
     set_y_boundary(points.n_y - 1, bc.y_n, points, u_field);
     set_additional_conditions(ac, points, u_field);
 
-    if(info.use_cuda){
-        cuda::gauss_seidel(cuda::gauss_seidel_info<type>{info.eps, info.max_it}, points, func, u_field);
-    } else {
-        gauss_seidel(info, points, func, u_field);
-    }
+#ifdef USE_CUDA
+    cuda::gauss_seidel(cuda::gauss_seidel_info<type>{info.eps, info.max_it}, points, func, u_field);
+#else
+    gauss_seidel(info, points, func, u_field);
+#endif
 
     adjust_field(points, u_field);
 
