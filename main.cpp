@@ -3,9 +3,9 @@
 
 #define DEBUG_INFO
 
-#include "operations.h"
-#include "function.h"
-#include "gauss_seidel.h"
+#include "core/operations.h"
+#include "core/function.h"
+#include "core/gauss_seidel.h"
 
 template<typename type>
 void example_1(points<type>& xy_grid, function<type>& g_func, boundary_condition<type>& bc, function<type>& ex_func, additional_conditions<type>&){
@@ -135,20 +135,22 @@ void example_6(points<type>& xy_grid, function<type>& g_func, boundary_condition
     };
 }
 
+bool use_cuda = true;
+
 int main()
 {
     using Type = float;
 
-    points<Type> xy_grid(101, 101);
+    points<Type> xy_grid(401, 401);
     function<Type> g_func, ex_func;
     boundary_condition<Type> bc;
     additional_conditions<Type> ac;
 
-    example_5(xy_grid, g_func, bc, ex_func, ac);
+    example_4(xy_grid, g_func, bc, ex_func, ac);
 
-    field<Type> u_field = poisson_gauss_seidel(gauss_seidel_info<Type>{Type(0.000001), 50000}, xy_grid, g_func, bc, ac);
+    field<Type> u_field = poisson_gauss_seidel(gauss_seidel_info<Type>{Type(0.0000001), 100000, use_cuda}, xy_grid, g_func, bc, ac);
 
-    std::filesystem::path res_path = std::filesystem::current_path() / "release/res";
+    std::filesystem::path res_path = std::filesystem::current_path() / (use_cuda ? "release/res_cuda" : "release/res");
     if(! std::filesystem::exists(res_path)){
         std::filesystem::create_directories(res_path);
     }

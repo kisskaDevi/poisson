@@ -1,12 +1,11 @@
-#ifndef GAUSS_SEIDEL_H
-#define GAUSS_SEIDEL_H
+#include "gauss_seidel.h"
+
+#include "cuda/cuda_gauss_seidel.h"
 
 #include <iostream>
 #include <chrono>
 
-#include "point.h"
-#include "function.h"
-#include "field.h"
+#define DEBUG_INFO
 
 template<typename type>
 type get_u(point<type> delta, const potential<type>& u_field){
@@ -23,6 +22,8 @@ type get_u(point<type> delta, const potential<type>& u_field){
 template<typename type>
 void set_x_boundary(size_t i, const boundary<type>& bc, const points<type>& points, field<type>& u_field){
     switch (bc.b_type) {
+    case boundary_type::Non:
+        break;
     case boundary_type::Dirichlet:
         for(size_t j = 0; j < points.n_y; j++){
             u_field[i][j].b_type = boundary_type::Dirichlet;
@@ -41,6 +42,8 @@ void set_x_boundary(size_t i, const boundary<type>& bc, const points<type>& poin
 template<typename type>
 void set_y_boundary(size_t j, const boundary<type>& bc, const points<type>& points, field<type>& u_field){
     switch (bc.b_type) {
+    case boundary_type::Non:
+        break;
     case boundary_type::Dirichlet:
         for(size_t i = 0; i < points.n_x; i++){
             u_field[i][j].b_type = boundary_type::Dirichlet;
@@ -90,29 +93,7 @@ void adjust_field(const points<type>& points, field<type>& u_field){
 }
 
 template<typename type>
-struct gauss_seidel_info{
-    type eps{0};
-    size_t max_it{0};
-};
-
-template<typename type>
-field<type> poisson_gauss_seidel(
-    const gauss_seidel_info<type>& info,
-    const points<type>& points,
-    const function<type>& func,
-    const boundary_condition<type>& bc,
-    const additional_conditions<type>& ac = {})
-{
-#ifdef DEBUG_INFO
-    const auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-    field<type> u_field(points);
-    set_x_boundary(0, bc.x_0, points, u_field);
-    set_x_boundary(points.n_x - 1, bc.x_n, points, u_field);
-    set_y_boundary(0, bc.y_0, points, u_field);
-    set_y_boundary(points.n_y - 1, bc.y_n, points, u_field);
-
+void set_additional_conditions(const additional_conditions<type>& ac, const points<type>& points, field<type>& u_field){
     for(const auto& condition: ac){
         for(size_t i = 0; i < points.n_x; i++){
             for(size_t j = 0; j < points.n_y; j++){
@@ -122,7 +103,10 @@ field<type> poisson_gauss_seidel(
             }
         }
     }
+}
 
+template<typename type>
+void gauss_seidel(const gauss_seidel_info<type>& info, const points<type>& points, const function<type>& func, field<type>& u_field){
     bool convergence = false;
     size_t it = 0;
     for (; !convergence && it < info.max_it; it++ ){
@@ -136,11 +120,11 @@ field<type> poisson_gauss_seidel(
 
                     type temp = u_field[i][j].value;
                     u_field[i][j].value = (
-                        a * (get_u({ type(2) * dx,  0}, u_field[i + 1][j]) + (u_field[i + 1][j].isNeumann() ? u_field[i - 1][j].value : type(0))) +
-                        a * (get_u({-type(2) * dx,  0}, u_field[i - 1][j]) + (u_field[i - 1][j].isNeumann() ? u_field[i + 1][j].value : type(0))) +
-                        b * (get_u({  0, type(2) * dy}, u_field[i][j + 1]) + (u_field[i][j + 1].isNeumann() ? u_field[i][j - 1].value : type(0))) +
-                        b * (get_u({  0,-type(2) * dy}, u_field[i][j - 1]) + (u_field[i][j - 1].isNeumann() ? u_field[i][j + 1].value : type(0))) -
-                        func[i][j]) / c;
+                                              a * (get_u({ type(2) * dx, 0}, u_field[i + 1][j]) + (u_field[i + 1][j].isNeumann() ? u_field[i - 1][j].value : type(0))) +
+                                              a * (get_u({-type(2) * dx, 0}, u_field[i - 1][j]) + (u_field[i - 1][j].isNeumann() ? u_field[i + 1][j].value : type(0))) +
+                                              b * (get_u({0,  type(2) * dy}, u_field[i][j + 1]) + (u_field[i][j + 1].isNeumann() ? u_field[i][j - 1].value : type(0))) +
+                                              b * (get_u({0, -type(2) * dy}, u_field[i][j - 1]) + (u_field[i][j - 1].isNeumann() ? u_field[i][j + 1].value : type(0))) -
+                                              func[i][j]) / c;
 
                     dmax = std::max(dmax, std::abs(temp - u_field[i][j].value));
                 }
@@ -148,13 +132,42 @@ field<type> poisson_gauss_seidel(
         }
         convergence = dmax < info.eps;
     }
+#ifdef DEBUG_INFO
+    std::cout << "   convergence = " << (convergence ? "true" : "false") << std::endl;
+    std::cout << "   last_it = " << it << std::endl;
+#endif
+}
+
+template<typename type>
+field<type> poisson_gauss_seidel(
+    const gauss_seidel_info<type>& info,
+    const points<type>& points,
+    const function<type>& func,
+    const boundary_condition<type>& bc,
+    const additional_conditions<type>& ac)
+{
+#ifdef DEBUG_INFO
+    const auto start = std::chrono::high_resolution_clock::now();
+    std::cout << "poisson_gauss_seidel :"<< std::endl;
+#endif
+
+    field<type> u_field(points);
+
+    set_x_boundary(0, bc.x_0, points, u_field);
+    set_x_boundary(points.n_x - 1, bc.x_n, points, u_field);
+    set_y_boundary(0, bc.y_0, points, u_field);
+    set_y_boundary(points.n_y - 1, bc.y_n, points, u_field);
+    set_additional_conditions(ac, points, u_field);
+
+    if(info.use_cuda){
+        cuda::gauss_seidel(cuda::gauss_seidel_info<type>{info.eps, info.max_it}, points, func, u_field);
+    } else {
+        gauss_seidel(info, points, func, u_field);
+    }
 
     adjust_field(points, u_field);
 
 #ifdef DEBUG_INFO
-    std::cout << "poisson_gauss_seidel :"<< std::endl;
-    std::cout << "   convergence = " << (convergence ? "true" : "false") << std::endl;
-    std::cout << "   last_it = " << it << std::endl;
     std::cout << "   time = " <<
         std::chrono::duration<float, std::chrono::milliseconds::period>(std::chrono::high_resolution_clock::now() - start).count() << " ms" << std::endl;
 #endif
@@ -162,4 +175,19 @@ field<type> poisson_gauss_seidel(
     return u_field;
 }
 
-#endif
+template struct gauss_seidel_info<float>;
+template struct gauss_seidel_info<double>;
+
+template field<float> poisson_gauss_seidel(
+    const gauss_seidel_info<float>& info,
+    const points<float>& points,
+    const function<float>& func,
+    const boundary_condition<float>& bc,
+    const additional_conditions<float>& ac);
+
+template field<double> poisson_gauss_seidel(
+    const gauss_seidel_info<double>& info,
+    const points<double>& points,
+    const function<double>& func,
+    const boundary_condition<double>& bc,
+    const additional_conditions<double>& ac);

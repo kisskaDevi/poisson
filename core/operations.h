@@ -44,4 +44,4 @@ type** generate(size_t n_x, size_t n_y){
     return mem;
 }
 
-#endif
+#endif // OPERATIONS_H

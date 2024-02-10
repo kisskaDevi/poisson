@@ -70,9 +70,12 @@ if __name__ == '__main__':
     
     xy_grid = grid(args.path + "/xy_grid.txt")
     u_field = field(args.path + "/u_field.txt")
+    cuda_grid = grid(args.path + "/../res_cuda/xy_grid.txt")
+    cuda_field = field(args.path + "/../res_cuda/u_field.txt")
 
     exact = np.array([[float(val) for val in line.split('\t') if val != '\n'] for line in open(args.path + "/ex_func.txt", "r")])
     value = u_field.get_np_u()
+    c_value = cuda_field.get_np_u()
 
     fig = plt.figure(figsize = (12,10))
     match args.type:
@@ -84,5 +87,5 @@ if __name__ == '__main__':
             plt.quiver(xy_grid.get_np_x(), xy_grid.get_np_y(), - u_field.get_np_gx(), - u_field.get_np_gy(), units='width')
         case "3d":
             ax = plt.axes(projection='3d')
-            surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), value, cmap='inferno')
+            surf = ax.plot_surface(xy_grid.get_np_x(), xy_grid.get_np_y(), exact -  c_value, cmap='inferno')
     plt.show()
